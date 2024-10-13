@@ -82,20 +82,20 @@ The app will now be running locally at http://localhost:3000.
 
 ## /api/words [POST]
 
-• Saves a new word with all required metadata.
-• Request body:
+- Saves a new word with all required metadata.
+- Request body:
 
     ```bash
     {
-        "word": "exemplary",
-        "meaning": "serving as a desirable model; representing the best of its kind.",
-        "example": "His exemplary work ethic inspired the whole team.",
-        "wordType": "adjective",
-        "synonyms": ["ideal", "model", "commendable"],
-        "antonyms": ["bad", "dishonorable"],
-        "pronunciation": "eg-zem-pluh-ree",
-        "origin": "Late 16th century: from late Latin 'exemplaris', from 'exemplum' meaning 'example'.",
-        "date": "2024-10-12"
+	"word": "exemplary",
+	"meaning": "serving as a desirable model; representing the best of its kind.",
+	"example": "His exemplary work ethic inspired the whole team.",
+	"wordType": "adjective",
+	"synonyms": ["ideal", "model", "commendable"],
+	"antonyms": ["bad", "dishonorable"],
+	"pronunciation": "eg-zem-pluh-ree",
+	"origin": "Late 16th century: from late Latin 'exemplaris', from 'exemplum' meaning 'example'.",
+	"date": "2024-10-12"
     }   
 
 ## Usage
