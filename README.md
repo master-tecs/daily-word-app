@@ -110,7 +110,9 @@ The app uses the Web Speech API to enable text-to-speech functionality. When a u
 
 ## Screenshots
 
-(Add screenshots of the app here if available. Example format below.)
+<img width="878" alt="Screenshot 2024-10-13 at 3 46 00 PM" src="https://github.com/user-attachments/assets/4628114f-7913-48ee-8848-1bfb370a7f98">
+
+<img width="1135" alt="Screenshot 2024-10-13 at 3 36 35 PM" src="https://github.com/user-attachments/assets/3b1e90bc-83da-4e00-a190-75e4d8f74c70">
 
 ### Main Screen
 
