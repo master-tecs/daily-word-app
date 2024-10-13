@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AiChatSession } from "@/service/AiModule";
+import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image";
 import avatarImg from './images/placeholder.jpg';
 import { Switch } from "@/components/ui/switch"
@@ -24,7 +25,7 @@ interface Word {
 
 export default function Component() {
   const [word, setWord] = useState<Word | null>(null);
-
+  const [isLoading, setIsLoading] = useState(true)
   const [darkMode, setDarkMode] = useState(true)
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function Component() {
 useEffect(() => {
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set the time to 12:00 AM
+  setIsLoading(true)
 
   const storedWordData = localStorage.getItem('wordOfTheDay');
   
@@ -49,6 +51,7 @@ useEffect(() => {
     // Check if the word in localStorage is for the current day
     if (storedDate === currentDate) {
       setWord(parsedWordData.word);
+      setIsLoading(false)
       console.log('Using word from localStorage:', parsedWordData.word);
       return; // No need to fetch or generate a new word
     }
@@ -69,6 +72,7 @@ const getLatestWord = async (date: Date) => {
 
       if (fetchedWordDate === currentDate) {
         setWord(saveResponse.data.word);
+        setIsLoading(false)
         console.log('Word is for the same day');
 
         // Save the word in localStorage
@@ -109,6 +113,7 @@ const generateNewWord = async (date: Date) => {
 
     // Update the word state with the parsed JSON data
     setWord(parsedWord);
+    setIsLoading(false)
     console.log({ parsedWord });
 
     // Send the generated word and the date to the backend
@@ -148,9 +153,7 @@ const pronounceWord = (word: string) => {
   window.speechSynthesis.speak(utterance);
 };
 
-  if (!word) {
-    return <div>Loading...</div>;
-  }
+ 
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-200 ${darkMode ? 'bg-gray-900' : 'bg-[#f0efe9]'}`}>
@@ -173,8 +176,16 @@ const pronounceWord = (word: string) => {
               <Moon className={`h-4 w-4 ${darkMode ? 'text-blue-400' : 'text-gray-400'}`} />
             </div>
           </div>
-          <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>«{word.word}»</h2>
+          {isLoading ? (
+            <Skeleton className="h-10 w-3/4 mb-4" />
+          ) : (
+          <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>«{word?.word}»</h2>
+          )}
           <div className="absolute right-10 bottom-4">
+          {isLoading ? (
+            <>  </>
+              // <Skeleton className="h-24 w-24 rounded-full" />
+            ) : (
           <Image
               src={avatarImg}
               width={50}
@@ -182,12 +193,23 @@ const pronounceWord = (word: string) => {
               alt="Illustration"
               className="rounded-full"
             />
-          </div>
+            )}
+            </div>
         </CardHeader>
         <CardContent className={`rounded-t-3xl p-6 space-y-4 ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
+        {isLoading ? (
+            <>
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </>
+          ) : (
+            <>
           <div className="flex items-center justify-between">
-            <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>«{word.word}»</h3>
-            <Button variant="ghost" size="icon" className={darkMode ? 'text-green-400' : 'text-[#2c6e49]'} onClick={() => pronounceWord(word.word)} // Add this line to handle pronunciation
+            <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>«{word?.word}»</h3>
+            <Button variant="ghost" size="icon" className={darkMode ? 'text-green-400' : 'text-[#2c6e49]'} onClick={() => pronounceWord(word?.word)} // Add this line to handle pronunciation
             >
               <span className="sr-only">Pronounce</span>
               <svg
@@ -207,7 +229,7 @@ const pronounceWord = (word: string) => {
               </svg>
             </Button>
           </div>
-          <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>[{word.pronunciation}]</p>
+          <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>[{word?.pronunciation}]</p>
           <div>
             <span className="text-[#ffa41b] font-semibold">• {word.wordType}</span>
             <p className={`mt-2 ${darkMode ? 'text-white' : 'text-black'}`}>
@@ -225,14 +247,14 @@ const pronounceWord = (word: string) => {
             </TabsList>
             <TabsContent value="synonyms" className="mt-2">
               <ul className={`list-disc pl-5 space-y-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {word.synonyms ? word.synonyms?.map(synonym => (
+              {word?.synonyms ? word?.synonyms?.map(synonym => (
                   <li key={synonym}>{synonym.charAt(0).toUpperCase() + synonym.slice(1).toLowerCase()}</li>
                 )) : "Null"}
               </ul>
             </TabsContent>
             <TabsContent value="antonyms" className="mt-2">
               <ul className={`list-disc pl-5 space-y-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {word.antonyms ? word.antonyms?.map(antonym => (
+              {word?.antonyms ? word?.antonyms?.map(antonym => (
                   <li key={antonym}>{antonym.charAt(0).toUpperCase() + antonym.slice(1).toLowerCase()}</li>
                 )) : "Null"}
               </ul>
@@ -244,9 +266,11 @@ const pronounceWord = (word: string) => {
             </CardHeader>
             <CardContent>
               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              {word.origin}</p>
+              {word?.origin}</p>
             </CardContent>
           </Card>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
