@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AiChatSession } from "@/service/AiModule";
 import Image from "next/image";
 import avatarImg from './images/placeholder.jpg';
+import { Switch } from "@/components/ui/switch"
+import { Moon, Sun } from "lucide-react"
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -22,6 +24,16 @@ interface Word {
 
 export default function Component() {
   const [word, setWord] = useState<Word | null>(null);
+
+  const [darkMode, setDarkMode] = useState(true)
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
 
 useEffect(() => {
   const today = new Date();
@@ -141,31 +153,41 @@ const pronounceWord = (word: string) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0efe9] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-[#faf7e8] shadow-lg">
+    <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-200 ${darkMode ? 'bg-gray-900' : 'bg-[#f0efe9]'}`}>
+      <Card className={`w-full max-w-md shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-[#faf7e8]'}`}>
         <CardHeader className="relative">
-          <div className="absolute top-4 left-4 text-gray-500 text-sm"></div>
+          {/* <div className="absolute top-4 left-4 text-gray-500 text-sm">09:00</div> */}
           <div className="absolute top-4 right-4 flex space-x-1">
             {/* <div className="w-4 h-4 bg-gray-500 rounded-full"></div>
             <div className="w-6 h-4 bg-gray-500 rounded-full"></div> */}
           </div>
-          <CardTitle className="text-3xl font-serif mt-8 mb-2">Word of the Day</CardTitle>
-          <h2 className="text-4xl font-bold mb-4">«{word.word}»</h2>
-          <div className="absolute right-4 bottom-4">
-            <Image
+          <div className="flex justify-between items-center mb-4">
+            <CardTitle className={`text-3xl font-serif ${darkMode ? 'text-white' : 'text-black'}`}>Word of the Day</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Sun className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-yellow-500'}`} />
+              <Switch
+                checked={darkMode}
+                onCheckedChange={setDarkMode}
+                aria-label="Toggle dark mode"
+              />
+              <Moon className={`h-4 w-4 ${darkMode ? 'text-blue-400' : 'text-gray-400'}`} />
+            </div>
+          </div>
+          <h2 className={`text-4xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-black'}`}>«{word.word}»</h2>
+          <div className="absolute right-10 bottom-4">
+          <Image
               src={avatarImg}
-              width={100}
-              height={100}
+              width={50}
+              height={50}
               alt="Illustration"
               className="rounded-full"
             />
           </div>
         </CardHeader>
-        <CardContent className="bg-white rounded-t-3xl p-6 space-y-4">
+        <CardContent className={`rounded-t-3xl p-6 space-y-4 ${darkMode ? 'bg-gray-700' : 'bg-white'}`}>
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold">«{word.word}»</h3>
-            <Button variant="ghost" size="icon" className="text-[#2c6e49]" 
-            onClick={() => pronounceWord(word.word)} // Add this line to handle pronunciation
+            <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>«{word.word}»</h3>
+            <Button variant="ghost" size="icon" className={darkMode ? 'text-green-400' : 'text-[#2c6e49]'} onClick={() => pronounceWord(word.word)} // Add this line to handle pronunciation
             >
               <span className="sr-only">Pronounce</span>
               <svg
@@ -185,13 +207,13 @@ const pronounceWord = (word: string) => {
               </svg>
             </Button>
           </div>
-          <p className="text-gray-500">[{word.pronunciation}]</p>
+          <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>[{word.pronunciation}]</p>
           <div>
             <span className="text-[#ffa41b] font-semibold">• {word.wordType}</span>
-            <p className="mt-2">
+            <p className={`mt-2 ${darkMode ? 'text-white' : 'text-black'}`}>
               {word.meaning}
             </p>
-            <ul className="list-disc pl-5 mt-2 space-y-2 text-gray-500 italic">
+            <ul className={`list-disc pl-5 mt-2 space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'} italic`}>
               <li>{word.example}</li>
               {/* <li>The museum's collection of personalia offers intimate glimpses into the artist's life.</li> */}
             </ul>
@@ -202,28 +224,27 @@ const pronounceWord = (word: string) => {
               <TabsTrigger value="antonyms">Antonyms</TabsTrigger>
             </TabsList>
             <TabsContent value="synonyms" className="mt-2">
-              <ul className="list-disc pl-5 space-y-1">
-                {word.synonyms ? word.synonyms?.map(synonym => (
+              <ul className={`list-disc pl-5 space-y-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {word.synonyms ? word.synonyms?.map(synonym => (
                   <li key={synonym}>{synonym.charAt(0).toUpperCase() + synonym.slice(1).toLowerCase()}</li>
                 )) : "Null"}
               </ul>
             </TabsContent>
             <TabsContent value="antonyms" className="mt-2">
-              <ul className="list-disc pl-5 space-y-1">
-                {word.antonyms ? word.antonyms?.map(antonym => (
+              <ul className={`list-disc pl-5 space-y-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {word.antonyms ? word.antonyms?.map(antonym => (
                   <li key={antonym}>{antonym.charAt(0).toUpperCase() + antonym.slice(1).toLowerCase()}</li>
                 )) : "Null"}
               </ul>
             </TabsContent>
           </Tabs>
-          <Card className="bg-[#faf7e8] border-none">
+          <Card className={darkMode ? 'bg-gray-600 border-none' : 'bg-[#faf7e8] border-none'}>
             <CardHeader>
-              <CardTitle className="text-xl font-serif">What is the Origin?</CardTitle>
+              <CardTitle className={`text-xl font-serif ${darkMode ? 'text-white' : 'text-black'}`}>What is the Origin?</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">
-                {word.origin}
-              </p>
+              <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              {word.origin}</p>
             </CardContent>
           </Card>
         </CardContent>
