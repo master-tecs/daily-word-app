@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, message: 'Word saved successfully', word: newWord }, { status: 201 });
     
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Internal Server Error! Please try again!' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Internal Server Error! Please try again!', error }, { status: 500 });
     }
 }
 
@@ -56,6 +56,6 @@ export async function GET() {
         return NextResponse.json({ success: true, word: latestWord }, { status: 200 });
         
     } catch (error) {
-        return NextResponse.json({ success: false, message: 'Internal Server Error! Please try again!' }, { status: 500 });
+        return NextResponse.json({ success: false, message: 'Internal Server Error! Please try again!', error }, { status: 500 });
     }
 }

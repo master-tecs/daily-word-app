@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AiChatSession } from "@/service/AiModule";
 import { Skeleton } from "@/components/ui/skeleton"
@@ -9,7 +9,7 @@ import Image from "next/image";
 import avatarImg from './images/placeholder.jpg';
 import { Switch } from "@/components/ui/switch"
 import { Moon, Sun } from "lucide-react"
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 interface Word {
@@ -36,116 +36,138 @@ export default function Component() {
     }
   }, [darkMode])
 
-useEffect(() => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set the time to 12:00 AM
-  setIsLoading(true)
-
-  const storedWordData = localStorage.getItem('wordOfTheDay');
+  const generateNewWord = async (date: Date) => {
+    const prompt = "Give me a word of the day in one of these fields: business, technology, marketing, sales, or innovation in JSON format that I can use in my daily life to improve my vocabulary. Include the meaning, example in a sentence, word type, synonyms, antonyms, pronunciation and origin.";
   
-  if (storedWordData) {
-    const parsedWordData = JSON.parse(storedWordData);
-    const storedDate = new Date(parsedWordData.date).toISOString().split('T')[0];
-    const currentDate = today.toISOString().split('T')[0];
-
-    // Check if the word in localStorage is for the current day
-    if (storedDate === currentDate) {
-      setWord(parsedWordData.word);
+    try {
+      // Generate the word from AI module
+      const result = await AiChatSession.sendMessage(prompt);
+      
+      // Assuming result.response.text() gives a JSON string, we parse it
+      const jsonResponse = await result.response.text();
+      const parsedWord: Word = JSON.parse(jsonResponse);
+  
+      // Update the word state with the parsed JSON data
+      setWord(parsedWord);
       setIsLoading(false)
-      console.log('Using word from localStorage:', parsedWordData.word);
-      return; // No need to fetch or generate a new word
-    }
-  }
-
-  // If no word in localStorage or the word is not for today, fetch or generate a new word
-  getLatestWord(today);
-}, []);
-
-const getLatestWord = async (date: Date) => {
-  try {
-    const saveResponse = await axios.get('/api/words');
-    console.log({ saveResponse });
-
-    if (saveResponse.status === 200 && saveResponse.data.success === true) {
-      const fetchedWordDate = saveResponse.data.word.date.split('T')[0]; // Extract only the date part
-      const currentDate = date.toISOString().split('T')[0];
-
-      if (fetchedWordDate === currentDate) {
-        setWord(saveResponse.data.word);
-        setIsLoading(false)
-        console.log('Word is for the same day');
-
+      console.log({ parsedWord });
+  
+      // Send the generated word and the date to the backend
+      let saveResponse;
+      try {
+        saveResponse = await axios.post('/api/words', {
+          word: parsedWord.word,
+          meaning: parsedWord.meaning,
+          example: parsedWord.example,
+          wordType: parsedWord.wordType, // Ensure this matches your parsed data structure
+          synonyms: parsedWord.synonyms,
+          antonyms: parsedWord.antonyms,
+          pronunciation: parsedWord.pronunciation || "Not available",
+          origin: parsedWord.origin,
+          date: date, // Adding today's date with 12:00 AM time
+        });
+  
+        console.log('Word saved successfully:', saveResponse.data);
+  
         // Save the word in localStorage
         localStorage.setItem('wordOfTheDay', JSON.stringify({
-          word: saveResponse.data.word,
-          date: saveResponse.data.word.date,
+          word: parsedWord,
+          date: date.toISOString(),
         }));
+      } catch (error) {
+        console.error('Error saving word:', error);
+      }
+  
+    } catch (error) {
+      console.error('Failed to fetch, parse, or save word:', error);
+    }
+  };
+  
+  const getLatestWord = useCallback(async (date: Date) => {
+    try {
+      const saveResponse = await axios.get('/api/words');
+      console.log({ saveResponse });
+  
+      if (saveResponse.status === 200 && saveResponse.data.success === true) {
+        const fetchedWordDate = saveResponse.data.word.date.split('T')[0]; // Extract only the date part
+        const currentDate = date.toISOString().split('T')[0];
+  
+        if (fetchedWordDate === currentDate) {
+          setWord(saveResponse.data.word);
+          setIsLoading(false)
+          console.log('Word is for the same day');
+  
+          // Save the word in localStorage
+          localStorage.setItem('wordOfTheDay', JSON.stringify({
+            word: saveResponse.data.word,
+            date: saveResponse.data.word.date,
+          }));
+        } else {
+          console.log('Word is from a different day');
+          generateNewWord(date);
+        }
+      } else if (saveResponse.status === 401) {
+        // Word for the day already exists but we need a new one
+        console.log('Word for the same date already exists');
+        generateNewWord(date);
       } else {
-        console.log('Word is from a different day');
+        console.log('Failed to fetch word, generating new one');
         generateNewWord(date);
       }
-    } else if (saveResponse.status === 401) {
-      // Word for the day already exists but we need a new one
-      console.log('Word for the same date already exists');
-      generateNewWord(date);
-    } else {
-      console.log('Failed to fetch word, generating new one');
-      generateNewWord(date);
-    }
-
-    console.log('Word processed successfully:', saveResponse.data);
-  } catch (error) {
-    console.error('Error fetching or saving word:', error);
-    generateNewWord(date); // In case of any error, try generating a new word
-  }
-};
-
-const generateNewWord = async (date: Date) => {
-  const prompt = "Give me a word of the day in one of these fields: business, technology, marketing, sales, or innovation in JSON format that I can use in my daily life to improve my vocabulary. Include the meaning, example in a sentence, word type, synonyms, antonyms, pronunciation and origin.";
-
-  try {
-    // Generate the word from AI module
-    const result = await AiChatSession.sendMessage(prompt);
-    
-    // Assuming result.response.text() gives a JSON string, we parse it
-    const jsonResponse = await result.response.text();
-    const parsedWord: Word = JSON.parse(jsonResponse);
-
-    // Update the word state with the parsed JSON data
-    setWord(parsedWord);
-    setIsLoading(false)
-    console.log({ parsedWord });
-
-    // Send the generated word and the date to the backend
-    let saveResponse;
-    try {
-      saveResponse = await axios.post('/api/words', {
-        word: parsedWord.word,
-        meaning: parsedWord.meaning,
-        example: parsedWord.example,
-        wordType: parsedWord.wordType, // Ensure this matches your parsed data structure
-        synonyms: parsedWord.synonyms,
-        antonyms: parsedWord.antonyms,
-        pronunciation: parsedWord.word || "Nothing!",
-        origin: parsedWord.origin,
-        date: date, // Adding today's date with 12:00 AM time
-      });
-
-      console.log('Word saved successfully:', saveResponse.data);
-
-      // Save the word in localStorage
-      localStorage.setItem('wordOfTheDay', JSON.stringify({
-        word: parsedWord,
-        date: date.toISOString(),
-      }));
+  
+      console.log('Word processed successfully:', saveResponse.data);
     } catch (error) {
-      console.error('Error saving word:', error);
+      console.error('Error fetching or saving word:', error);
+      generateNewWord(date); // In case of any error, try generating a new word
     }
+  }, []);
 
-  } catch (error) {
-    console.error('Failed to fetch, parse, or save word:', error);
-  }
-};
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set the time to 12:00 AM
+    setIsLoading(true);
+  
+    const storedWordData = localStorage.getItem('wordOfTheDay');
+    if (storedWordData) {
+      const parsedWordData = JSON.parse(storedWordData);
+      const storedDate = new Date(parsedWordData.date).toISOString().split('T')[0];
+      const currentDate = today.toISOString().split('T')[0];
+  
+      if (storedDate === currentDate) {
+        setWord(parsedWordData.word);
+        setIsLoading(false);
+        console.log('Using word from localStorage:', parsedWordData.word);
+        return; // No need to fetch or generate a new word
+      }
+    }
+  
+    getLatestWord(today);
+  }, [getLatestWord]);
+// useEffect(() => {
+//   const today = new Date();
+//   today.setHours(0, 0, 0, 0); // Set the time to 12:00 AM
+//   setIsLoading(true)
+
+//   const storedWordData = localStorage.getItem('wordOfTheDay');
+  
+//   if (storedWordData) {
+//     const parsedWordData = JSON.parse(storedWordData);
+//     const storedDate = new Date(parsedWordData.date).toISOString().split('T')[0];
+//     const currentDate = today.toISOString().split('T')[0];
+
+//     // Check if the word in localStorage is for the current day
+//     if (storedDate === currentDate) {
+//       setWord(parsedWordData.word);
+//       setIsLoading(false)
+//       console.log('Using word from localStorage:', parsedWordData.word);
+//       return; // No need to fetch or generate a new word
+//     }
+//   }
+
+//   // If no word in localStorage or the word is not for today, fetch or generate a new word
+//   getLatestWord(today);
+// }, [getLatestWord]);
+
 
 const pronounceWord = (word: string) => {
   const utterance = new SpeechSynthesisUtterance(word);
@@ -209,7 +231,7 @@ const pronounceWord = (word: string) => {
             <>
           <div className="flex items-center justify-between">
             <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>«{word?.word}»</h3>
-            <Button variant="ghost" size="icon" className={darkMode ? 'text-green-400' : 'text-[#2c6e49]'} onClick={() => pronounceWord(word?.word)} // Add this line to handle pronunciation
+            <Button variant="ghost" size="icon" className={darkMode ? 'text-green-400' : 'text-[#2c6e49]'} onClick={() => pronounceWord(word?.word || '')} // Add this line to handle pronunciation
             >
               <span className="sr-only">Pronounce</span>
               <svg
@@ -231,14 +253,13 @@ const pronounceWord = (word: string) => {
           </div>
           <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>[{word?.pronunciation}]</p>
           <div>
-            <span className="text-[#ffa41b] font-semibold">• {word.wordType}</span>
+            <span className="text-[#ffa41b] font-semibold">• {word?.wordType}</span>
             <p className={`mt-2 ${darkMode ? 'text-white' : 'text-black'}`}>
-              {word.meaning}
+              {word?.meaning}
             </p>
             <ul className={`list-disc pl-5 mt-2 space-y-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'} italic`}>
-              <li>{word.example}</li>
-              {/* <li>The museum's collection of personalia offers intimate glimpses into the artist's life.</li> */}
-            </ul>
+              <li>{word?.example}</li>
+              </ul>
           </div>
           <Tabs defaultValue="synonyms" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
