@@ -43,10 +43,10 @@ An application that helps users improve their vocabulary by providing a new word
     
 4. **Set up environment variables:**
   Create a .env file at the root of the project and add your MongoDB URI and any API keys you might need.
-
-  ```bash
-  MONGODB_URI=your_mongo_db_connection_string
-  AI_API_KEY=your_ai_api_key (if applicable)
+   
+    ```bash
+    MONGODB_URI=your_mongo_db_connection_string
+    AI_API_KEY=your_ai_api_key (if applicable)
 
 5. **Run the development server:**
 
@@ -62,8 +62,8 @@ The app will now be running locally at http://localhost:3000.
 
 ## /api/words [GET]
 
-	- Fetches the latest word stored in the database for the current day.
-	- Response:
+- Fetches the latest word stored in the database for the current day.
+- Response:
 
     ```bash
     {
@@ -82,8 +82,9 @@ The app will now be running locally at http://localhost:3000.
 
 ## /api/words [POST]
 
-	•	Saves a new word with all required metadata.
-	•	Request body:
+• Saves a new word with all required metadata.
+• Request body:
+
     ```bash
     {
         "word": "exemplary",
@@ -99,9 +100,9 @@ The app will now be running locally at http://localhost:3000.
 
 ## Usage
 
-	1.	Open the app to see the word of the day along with its meaning, example usage, synonyms, antonyms, and origin.
-	2.	Click on the Pronounce button to hear the word’s pronunciation using the Web Speech API.
-	3.	If no word is available for the current day, the app generates a new word and stores it.
+1.	Open the app to see the word of the day along with its meaning, example usage, synonyms, antonyms, and origin.
+2.	Click on the Pronounce button to hear the word’s pronunciation using the Web Speech API.
+3.	If no word is available for the current day, the app generates a new word and stores it.
 
 ## Pronunciation Feature
 
@@ -117,16 +118,17 @@ The app uses the Web Speech API to enable text-to-speech functionality. When a u
 
 (Coming...)
 
-```bash
-npm run test```
+ 	npm run test
+		
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+
 ## Author
 
-	- **Abdul-Wahab Abdutrasheed** - GitHub
+- **Abdul-Wahab Abdutrasheed** - GitHub master-tecs
 
 ## Contributions
 
