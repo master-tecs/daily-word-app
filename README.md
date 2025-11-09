@@ -1,28 +1,28 @@
 # Daily Word App
 
-An application that helps users improve their vocabulary by providing a new word daily. Users can fetch and store a word for the current day, including its definition, pronunciation, synonyms, and more. The app generates a new word each day if a word for that day has not been stored yet.
+An application that helps users improve their vocabulary by providing topic-specific words every day. The frontend caches each topic’s “word of the day” locally and calls an n8n webhook backed by Google Sheets only when the cache is missing or stale. The webhook makes sure there is one unique word per topic per day and can generate new entries through AI.
 
-## Features
-
-- **Daily Word Fetch**: Fetches a new word every day from the backend.
-- **Local Storage Integration**: Stores the word in local storage if it matches the current date, avoiding unnecessary API requests.
-- **Generate New Word**: Uses Google Gimini AI to generate a new word in case the word for the day is not available.
+- **Multi-topic support**: Users can track multiple topics (technology, marketing, etc.) and receive a dedicated word card for each.
+- **Daily Word Fetch**: Fetches a new word every day from the n8n webhook. If a cached entry exists for today, the API is not called.
+- **Local Storage Caching**: Stores the word (per topic) in `localStorage` to avoid unnecessary webhook calls.
+- **Serverless Backend**: n8n + Google Sheets store and serve the daily word as a lightweight backend.
 - **Pronunciation Button**: Users can click a button to hear the pronunciation of the word using the Web Speech API.
+- **Dark mode & UI polish**: Toggle dark/light mode, synonyms/antonyms tabs, and rich card-based design.
 
 ## Tech Stack
 
-- **Frontend**: React with TypeScript, Next.js
-- **Backend**: Node.js, Express, MongoDB
-- **Database**: MongoDB (used to store the words)
-- **AI Module**: Integrated with a language model to generate new words
-- **Deployment**: (If deployed, mention here e.g., Vercel, Heroku, etc.)
+- **Frontend**: React with TypeScript, Next.js, shadcn/ui components
+- **Serverless backend**: n8n webhook orchestrating Google Sheets + AI generation
+- **Storage**: Google Sheets (persistent store) + browser `localStorage` (per-topic cache)
+- **Deployment**: (If deployed, mention here e.g., Vercel, n8n Cloud, etc.)
 
 ## Installation and Setup
 
 ### Prerequisites
 
 - **Node.js** and **npm** installed on your local machine.
-- **MongoDB** instance running locally or on the cloud (you can use MongoDB Atlas).
+- **n8n** instance (self-hosted or cloud) connected to a Google Sheet.
+- **Google Service Account** credentials configured in n8n for Google Sheets access.
 
 ### Steps to Set Up Locally
 
@@ -42,12 +42,12 @@ An application that helps users improve their vocabulary by providing a new word
     npm install
     
 4. **Set up environment variables:**
-  Create a .env file at the root of the project and add your MongoDB URI and any API keys you might need.
+ Create a `.env.local` file at the root and add your n8n webhook URL (the full endpoint n8n exposes, without the `topic` query parameter).
    
-    ```bash
-    MONGODB_URI=your_mongo_db_connection_string
-    AI_API_KEY=your_ai_api_key (if applicable)
-
+   ```bash
+   NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL=https://n8n.srv1091639.hstgr.cloud/webhook-test/c2e4756f-4772-414f-b377-86a6392d6565
+   ```
+   
 5. **Run the development server:**
 
    ```bash
@@ -58,79 +58,71 @@ An application that helps users improve their vocabulary by providing a new word
 The app will now be running locally at http://localhost:3000.
 
 
-## API Endpoints
+## Serverless API Flow
 
-## /api/words [GET]
+### n8n Webhook
 
-- Fetches the latest word stored in the database for the current day.
-- Response:
+`GET /webhook/word?topic={topic}` (if you prefer running through a local proxy)  
+`GET https://n8n.srv1091639.hstgr.cloud/webhook-test/c2e4756f-4772-414f-b377-86a6392d6565?topic={topic}` (example direct webhook)
 
-    ```bash
-    {
-    "success": true,
-    "word": {
-        "word": "exemplary",
-        "meaning": "serving as a desirable model; representing the best of its kind.",
-        "example": "His exemplary work ethic inspired the whole team.",
-        "synonyms": ["ideal", "model", "commendable"],
-        "antonyms": ["bad", "dishonorable"],
-        "pronunciation": "eg-zem-pluh-ree",
-        "origin": "Late 16th century: from late Latin 'exemplaris', from 'exemplum' meaning 'example'.",
-        "date": "2024-10-12T00:00:00.000Z"
-        }
-    }
+- Looks up today’s word for the specified topic in Google Sheets.
+- If found, returns the cached row.
+- If missing, generates a new word (via your chosen AI node), appends it to the sheet, and returns the new entry.
+- Ensures a unique word per topic per day and avoids reusing words from the last 40 days.
 
-## /api/words [POST]
+Example request:
 
-- Saves a new word with all required metadata.
-- Request body:
+```
+GET https://your-n8n-instance.com/webhook/word?topic=technology
+```
 
-    ```bash
-    {
-	"word": "exemplary",
-	"meaning": "serving as a desirable model; representing the best of its kind.",
-	"example": "His exemplary work ethic inspired the whole team.",
-	"wordType": "adjective",
-	"synonyms": ["ideal", "model", "commendable"],
-	"antonyms": ["bad", "dishonorable"],
-	"pronunciation": "eg-zem-pluh-ree",
-	"origin": "Late 16th century: from late Latin 'exemplaris', from 'exemplum' meaning 'example'.",
-	"date": "2024-10-12"
-    }   
+Example response (compatible with the frontend):
+
+```json
+[
+  {
+    "Word": "Automatronic",
+    "Meaning": "Relating to the integration of automation and electronics in technology.",
+    "Synonyms": ["robotic", "automated"],
+    "Antonyms": ["manual", "analog"],
+    "PartOfSpeech": "Adjective",
+    "Date": "2025-11-09",
+    "Topic": "tech",
+    "Origin": "Blend of 'automatic' and 'electronic'",
+    "UsageExample": "The company introduced a new automatronic system that streamlined the manufacturing process."
+  }
+]
+```
 
 ## Usage
 
-1.	Open the app to see the word of the day along with its meaning, example usage, synonyms, antonyms, and origin.
-2.	Click on the Pronounce button to hear the word’s pronunciation using the Web Speech API.
-3.	If no word is available for the current day, the app generates a new word and stores it.
+1. Open the app to see the word of the day for each topic you have selected.
+2. Click the Pronounce button to hear the word’s pronunciation using the Web Speech API.
+3. The app caches each topic locally to avoid repeat webhook calls during the day.
+
+## Switching from MongoDB to n8n + Google Sheets
+
+1. **Remove MongoDB-specific code** (completed):
+   - Deleted `src/app/api/words` API route and the `mongodb`/`mongoose` utilities.
+   - Removed `@google/generative-ai`, `axios`, `mongodb`, and `mongoose` dependencies.
+2. **Provision Google Sheet**:
+   - Create a sheet with columns such as `date`, `topic`, `word`, `meaning`, `usage`, `partOfSpeech`, `synonyms`, `antonyms`, `pronunciation`, `origin`.
+3. **Configure n8n workflow**:
+   - **Trigger**: Webhook node (`GET /webhook/word`).
+   - **Lookup**: Google Sheets node filters by `topic` and today’s date.
+   - **Decision**:
+     - If found: return the existing row as JSON.
+     - If not: call an AI node (Gemini/OpenAI) to generate a new word, append it to the sheet, and respond with the new entry.
+   - **Deduplication**: Use a Google Sheets filter (or n8n Function node) to ensure no word repeats within the last 40 days.
+4. **Configure environment**:
+   - Set `NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL` so the frontend can call your n8n workflow.
+5. **Deploy**:
+   - Redeploy the Next.js app and n8n workflow.
+   - Clear any existing `localStorage` cache if you previously stored MongoDB entries.
 
 ## Pronunciation Feature
 
 The app uses the Web Speech API to enable text-to-speech functionality. When a user clicks on the pronunciation button, the app will pronounce the word out loud in the browser.
-
-## Screenshots
-
-<img width="878" alt="Screenshot 2024-10-13 at 3 46 00 PM" src="https://github.com/user-attachments/assets/4628114f-7913-48ee-8848-1bfb370a7f98">
-
-<img width="1135" alt="Screenshot 2024-10-13 at 3 36 35 PM" src="https://github.com/user-attachments/assets/3b1e90bc-83da-4e00-a190-75e4d8f74c70">
-
-### Main Screen
-
-## Running Tests
-
-(Coming...)
-
- 	npm run test
-		
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-
-## Author
-
-- **Abdul-Wahab Abdutrasheed** - GitHub master-tecs
 
 ## Contributions
 
