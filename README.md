@@ -14,7 +14,7 @@ An application that helps users improve their vocabulary by providing topic-spec
 - **Frontend**: React with TypeScript, Next.js, shadcn/ui components
 - **Serverless backend**: n8n webhook orchestrating Google Sheets + AI generation
 - **Storage**: Google Sheets (persistent store) + browser `localStorage` (per-topic cache)
-- **Deployment**: (If deployed, mention here e.g., Vercel, n8n Cloud, etc.)
+- **Deployment**: [daily-word-app.vercel.app](https://daily-word-app.vercel.app)
 
 ## Installation and Setup
 
@@ -30,32 +30,35 @@ An application that helps users improve their vocabulary by providing topic-spec
 
    ```bash
    git clone https://github.com/master-tecs/daily-word-app.git
+   ```
 
 2. **Navigate to the project directory:**
-   
-    ```bash
-    cd daily-word-app
-    
+
+   ```bash
+   cd daily-word-app
+   ```
+
 3. **Install dependencies:**
-   
-    ```bash
-    npm install
-    
+
+   ```bash
+   npm install
+   ```
+
 4. **Set up environment variables:**
- Create a `.env.local` file at the root and add your n8n webhook URL (the full endpoint n8n exposes, without the `topic` query parameter).
-   
+
+   Create a `.env.local` file at the root and add your n8n webhook URL (the full endpoint n8n exposes, without the `topic` query parameter).
+
    ```bash
    NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL=https://your-n8n-instance/webhook/word
    ```
-   
+
 5. **Run the development server:**
 
    ```bash
    npm run dev
+   ```
 
-
-### Where its running
-The app will now be running locally at http://localhost:3000.
+The app runs locally at http://localhost:3000.
 
 
 ## Serverless API Flow
