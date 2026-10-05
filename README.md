@@ -45,7 +45,7 @@ An application that helps users improve their vocabulary by providing topic-spec
  Create a `.env.local` file at the root and add your n8n webhook URL (the full endpoint n8n exposes, without the `topic` query parameter).
    
    ```bash
-   NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL=https://n8n.srv1091639.hstgr.cloud/webhook-test/c2e4756f-4772-414f-b377-86a6392d6565
+   NEXT_PUBLIC_N8N_WEBHOOK_BASE_URL=https://your-n8n-instance/webhook/word
    ```
    
 5. **Run the development server:**
@@ -63,7 +63,7 @@ The app will now be running locally at http://localhost:3000.
 ### n8n Webhook
 
 `GET /webhook/word?topic={topic}` (if you prefer running through a local proxy)  
-`GET https://n8n.srv1091639.hstgr.cloud/webhook-test/c2e4756f-4772-414f-b377-86a6392d6565?topic={topic}` (example direct webhook)
+`GET https://your-n8n-instance/webhook/word?topic={topic}` (example direct webhook)
 
 - Looks up today’s word for the specified topic in Google Sheets.
 - If found, returns the cached row.
